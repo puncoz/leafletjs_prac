@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>LeafLet Prac</title>
+
+	<!-- STYLESHEETS -->
+	<link rel="stylesheet" href="leaflet/leaflet.css" />
+
+	<style type="text/css">
+		#mapid { 
+			height: 640px; 
+			border: 1px solid #333;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="mapid"></div>
+
+	<div id="map_info" style="display: none;">
+		<h3>{{dis_name}}</h3>
+		<h2>Regional Office</h2>
+		<table border="1">
+			<thead>
+				<tr>
+					<th>Office</th>
+					<th>Manager</th>
+					<th>Address</th>
+					<th>Phone</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Nepalgunj</td>
+					<td>Mr. Kailash Devkota</td>
+					<td>Nepalgunj-14, Banke</td>
+					<td>081-527769</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>	
+
+	<!-- SCRIPTS -->
+	<script src="jquery.min.js"></script>
+	<script src="leaflet/leaflet.js"></script>
+	<script src="nepal.js"></script>
+	<script src="mask.js"></script>
+
+	<script type="text/javascript">
+		var mymap = L.map('mapid', {zoomControl: false, maxZoom: 12}).setView([28.1,84.1], 7);
+		new L.Control.Zoom({ position: 'bottomright' }).addTo(mymap);
+		new L.tileLayer('', {attribution: 'Nepal Map'}).addTo(mymap);
+		
+		
+		function whenClicked(e) {
+			var map_info = $("#map_info").html(),
+				dis_id = e.target.feature.properties.id,
+				dis_name = e.target.feature.properties.name;
+
+			map_info = map_info.replace(/{{dis_name}}/g, dis_name);
+
+			var popup = L.popup()
+					    .setLatLng(e.latlng)
+					    .setContent(map_info)
+					    .openOn(mymap);
+		}
+
+		function onEachFeature(feature, layer) {
+		    //bind click
+		    layer.on({
+		        click: whenClicked
+		    });
+		}
+
+		geojson = L.geoJson(nepalData, {
+		    style: '',
+		    onEachFeature: onEachFeature
+		}).addTo(mymap);
+		L.geoJson(maskdata).addTo(mymap);
+
+		
+	</script>
+
+</body>
+</html>
