@@ -11,7 +11,17 @@
 			height: 640px; 
 			border: 1px solid #333;
 		}
+
+		.text-labels {
+	    	line-height:0px;
+	        left: 20px;
+	        top: 20px;
+	        padding-left: 20px;
+	        /*font-size: 7px;*/
+	        /*position:absolute;*/
+	    }
 	</style>
+
 </head>
 <body>
 
@@ -47,15 +57,19 @@
 	<script src="mask.js"></script>
 
 	<script type="text/javascript">
+		var setOSM = true; // whether to display osm or not?
+
+		var osmUrl = setOSM ? 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' : '';
 		var mymap = L.map('mapid', {zoomControl: false, maxZoom: 12}).setView([28.1,84.1], 7);
 		new L.Control.Zoom({ position: 'bottomright' }).addTo(mymap);
-		new L.tileLayer('', {attribution: 'Nepal Map'}).addTo(mymap);
-		
-		
+		new L.tileLayer(osmUrl, {attribution: 'Nepal Map'}).addTo(mymap)	;
+				
 		function whenClicked(e) {
 			var map_info = $("#map_info").html(),
 				dis_id = e.target.feature.properties.id,
 				dis_name = e.target.feature.properties.name;
+
+			// console.log(e);
 
 			map_info = map_info.replace(/{{dis_name}}/g, dis_name);
 
@@ -65,7 +79,34 @@
 					    .openOn(mymap);
 		}
 
+		function addLabel(feature, layer) {
+			// console.log(layer.getBounds().getCenter());
+			var centerLatLng = layer.getBounds().getCenter();
+			var label = L.marker(centerLatLng, {
+				icon: L.divIcon({
+					className: 'text-labels',
+					html: feature.properties.name,
+					iconSize: [100, 40],
+				}),
+				draggable: false,       // Allow label dragging...?
+				zIndexOffset: 1000     // Make appear above other map features
+			}).addTo(mymap);
+
+			var currentZoom = mymap.getZoom();
+			// console.log(feature.properties.name.length);
+			$('.text-labels').css("font-size", currentZoom+"px");
+		}
+
+		mymap.on('zoomend', function(a) {
+			var currentZoom = mymap.getZoom();
+			$('.text-labels').css("font-size", (currentZoom*(Math.pow(currentZoom,1/currentZoom)))+"px");
+		});
+
+
 		function onEachFeature(feature, layer) {
+			// console.log(feature.geometry.coordinates);
+			addLabel(feature, layer);
+
 		    //bind click
 		    layer.on({
 		        click: whenClicked
@@ -73,12 +114,20 @@
 		}
 
 		geojson = L.geoJson(nepalData, {
-		    style: '',
+		    style: function (feature) {
+		    	var color = feature.properties.color;
+		    	return color ? {color: color} : false;
+		    },
 		    onEachFeature: onEachFeature
-		}).addTo(mymap);
-		L.geoJson(maskdata).addTo(mymap);
+		}).addTo(mymap).setStyle({
+    		weight: 1,
+    		// fillOpacity: 1
+		});
+		L.geoJson(maskdata).addTo(mymap).setStyle({
+    		weight: 3,
+    		color: "green"
+		});;
 
-		
 	</script>
 
 </body>
